@@ -14,6 +14,12 @@ The kernel must evaluate one parameter case and return a structured result witho
 - No dependence on capturing `stdout` from other scripts
 - Preserve enough detail for both batch research and future thin wrappers
 
+## Locked Decisions
+The following decisions are fixed for this repository phase:
+
+- `summary.status` and `summary.status_detail` will use research-oriented classification rather than legacy UI-oriented simplification.
+- bluffing solving will support two modes: `compat` and `research`.
+- the kernel must preserve multiple roots in `solutions`; it must not collapse them to a single solution at kernel level.
 ## Proposed Entry Point
 Logical shape:
 
@@ -242,4 +248,5 @@ For future implementation:
 - keep the kernel detailed and research-oriented
 - preserve multiple roots when found
 - let compatibility wrappers map the result to simpler statuses when needed
+
 
