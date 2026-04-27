@@ -14,6 +14,7 @@ This repository is dedicated to the research-side core algorithm work that is be
 - docs/core-kernel-design.md: pure computation kernel design
 - docs/current-program-algorithm.md: baseline description of the current gaming program's algorithm, execution flow, and framework
 - docs/kernel-implementation-plan.md: concrete first-phase implementation plan for the kernel
+- docs/loader-design.md: table-to-kernel input bridge design (next phase after the kernel)
 
 ## Non-Goals For This Repository Setup Phase
 - No UI code
