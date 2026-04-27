@@ -11,7 +11,8 @@ This repository is dedicated to the research-side core algorithm work that is be
 ## Initial Documents
 - `docs/exhaustion.txt`: original exhaustion condition specification
 - `docs/exhaustion-design.md`: batch exhaustion design
-- `docs/core-kernel-design.md`: pure computation kernel design
+- docs/core-kernel-design.md: pure computation kernel design
+- docs/current-program-algorithm.md: baseline description of the current gaming program's algorithm, execution flow, and framework
 
 ## Non-Goals For This Repository Setup Phase
 - No UI code
@@ -27,4 +28,5 @@ This repository is dedicated to the research-side core algorithm work that is be
 - Research-oriented status classification is the default reporting model.
 - Bluffing solving is planned with both `compat` and `research` modes.
 - Multiple roots will be preserved by the computation kernel rather than collapsed early.
+
 
