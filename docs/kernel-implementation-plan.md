@@ -34,7 +34,7 @@ tests/
   test_bluffing_compat.py
   test_bluffing_research.py
   test_evaluate_case.py
-pyproject.toml            # package metadata, scipy + pytest deps
+pyproject.toml            # hatchling backend, Python 3.11+, scipy + pytest deps
 ```
 No CLI, no `results/`, no exhaustion parser modules in this phase.
 
@@ -68,6 +68,44 @@ class KernelResult:
 - All numerical computation (CDF evaluations, GT closed form, bluffing residual, `brentq`) operates on `float`. Conversion happens at the boundary of `derived.py` and once at the boundary of each solver, never silently inside math expressions.
 - The original numeric values supplied by the caller are stored unchanged in `KernelResult.params`. Downstream summary writers may format them however they need.
 
+## Options Surface
+
+### Python and build
+- Target Python: **3.11+**. The schema relies on PEP 604 unions (`A | B`), `Literal[...]`, and built-in generics (`tuple[...]`, `Mapping[...]`).
+- Build backend: **hatchling**. `pyproject.toml` declares only `scipy` and `pytest` as dependencies in this phase.
+
+### Validation message language
+`failure_messages` are **English-only** in this phase. The `failure_codes` are language-neutral identifiers and constitute the stable contract; downstream tooling that needs another language must map by code, not by parsing message text.
+
+### Options dataclass
+This is the full, locked shape of `Options`. Field names and defaults are fixed; do not rename or reorder them.
+
+```python
+@dataclass(frozen=True)
+class Options:
+    # validation toggles
+    enforce_war_payoff_s1: bool = True
+    enforce_war_payoff_s2: bool = True
+    # bluffing solver selection
+    bluffing_solver_mode: Literal["compat", "research"] = "research"
+    # research-mode tuning
+    bluffing_sample_count: int = 200
+    xtol: float = 1e-12
+    rtol: float = 8.881784197001252e-16   # 4 * sys.float_info.epsilon
+    zero_tol: float = 1e-9
+    dedup_tol: float = 1e-6
+    # universal numerical guard (shared by GT and bluffing)
+    denom_eps: float = 1e-12
+```
+
+`evaluate_case(params, options=None)` treats `options is None` as `Options()`.
+
+### Where each option is applied
+- `denom_eps`: GT denominator guard, bluffing `expr2` denominator guard inside the residual, and any other near-zero-divisor check. The single epsilon is reused everywhere so behavior is consistent across solvers.
+- `bluffing_sample_count`, `xtol`, `rtol`, `zero_tol`, `dedup_tol`: research mode only; compat mode does not consult them.
+- `enforce_war_payoff_s1` / `enforce_war_payoff_s2`: validation only. When `False`, the corresponding rule is skipped entirely and never appears in `failure_codes` or `failure_messages`.
+- `bluffing_solver_mode`: read once at branch dispatch and stored in `Branch.solver_mode`.
+
 ## Validation
 Implemented in `kernel/validation.py`. Each rule has a stable code string and a human-readable message. Codes (matching `core-kernel-design.md`):
 
@@ -93,18 +131,20 @@ The two war-payoff rules are gated by `Options.enforce_war_payoff_s1` / `Options
 Closed form, exactly as described in `current-program-algorithm.md`:
 
 - `denominator = p + (1 - p) * F2(v2_star)`
-- if `denominator == 0`: no solution; status detail `gt_invalid_denominator`.
-- else:
+- if `abs(denominator) < options.denom_eps`: **emit zero solutions**; `status_detail = gt_invalid_denominator`.
+- else compute:
   - `v1_hat = ((1 - F2(v2_star)) * c1) / denominator`
   - `v2_hat = v2_star`
   - `in_support = (min1 <= v1_hat <= max1) and (min2 <= v2_hat <= max2)`
 
-Produces at most one `Solution` with `source="GT"`, `root_kind="closed_form"`, `root_index=0`, `m_star=None`.
+GT **always emits exactly one `Solution`** when the denominator guard passes, regardless of `in_support`. The support flag lives on the `Solution` itself; it does not gate solution emission. Only the invalid-denominator branch produces zero solutions.
 
-Status detail values:
-- `gt_valid_solution`
-- `gt_candidate_out_of_support`
-- `gt_invalid_denominator`
+The single emitted `Solution` carries `source="GT"`, `root_kind="closed_form"`, `root_index=0`, `m_star=None`.
+
+Status detail values (mutually exclusive):
+- `gt_valid_solution`            — denominator OK, `in_support=True`, one `Solution`
+- `gt_candidate_out_of_support`  — denominator OK, `in_support=False`, one `Solution`
+- `gt_invalid_denominator`       — denominator guard tripped, zero solutions
 
 ## Bluffing Solver (`kernel/bluffing.py`)
 
@@ -116,8 +156,8 @@ For a candidate `v1_hat`:
 - `expr1(v1_hat) = min2 + (max2 - min2) * (a1 / (v1_hat + a1))`
 - `numerator   = (max1 - min1) * (1 - F1(v1_star)) * c2 - (max1 - v1_hat) * a2`
 - `denominator = (max1 - v1_hat) - (max1 - min1) * p * (1 - F1(v1_star))`
-- `expr2(v1_hat) = numerator / denominator`   (undefined when `denominator == 0`)
-- `residual(v1_hat) = expr1(v1_hat) - expr2(v1_hat)`
+- `expr2(v1_hat) = numerator / denominator`. When `abs(denominator) < options.denom_eps`, the residual is **undefined** at that `v1_hat`: it is a discontinuity, not a root. Discontinuities are excluded from sign-change detection in research mode, and trigger `bluffing_numerical_failure` in compat mode if `fsolve` happens to converge onto one.
+- `residual(v1_hat) = expr1(v1_hat) - expr2(v1_hat)` (undefined when the guard above trips)
 
 The residual is exposed as a pure factory `build_residual(params, derived) -> Callable[[float], float]` so both solver modes share it without code duplication.
 
@@ -132,13 +172,13 @@ Mirrors the current single-run program:
 
 ### `research` mode
 - coarse sampling: `N = options.bluffing_sample_count` points (default `200`) equally spaced on `[min1, max1]`
-- evaluate `residual` at each sample, skipping points where `denominator == 0`; those points are recorded as discontinuities, not as roots
+- evaluate `residual` at each sample, skipping points where `abs(denominator) < options.denom_eps`; those points are recorded as discontinuities, not as roots
 - for each adjacent pair of finite samples whose residuals have opposite signs, call `brentq(residual, lo, hi, xtol=options.xtol, rtol=options.rtol)`
 - additionally, treat any sample whose `|residual|` is below `options.zero_tol` as a candidate root directly (subject to deduplication)
 - deduplicate candidate roots by `|v1_a - v1_b| <= options.dedup_tol` (default `1e-6`)
 - the returned `Solution` list contains every accepted root in ascending `v1_hat` order, with `root_index = 0..k-1`
 
-`Options` numeric tunables (with defaults): `bluffing_sample_count=200`, `xtol=1e-12`, `rtol=4*eps`, `zero_tol=1e-9`, `dedup_tol=1e-6`. They are deliberately part of the kernel options, not hard-coded inside the solver.
+The numeric tunables consumed by research mode (`bluffing_sample_count`, `xtol`, `rtol`, `zero_tol`, `dedup_tol`) are defined once on `Options` (see "Options Surface" above). They must not be hard-coded inside the solver.
 
 ### Per-root post-processing (both modes)
 For every accepted `v1_hat`:
