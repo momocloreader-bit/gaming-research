@@ -2,6 +2,15 @@
 
 Briefing for the implementer of **Phase 1** of `gaming-research`.
 
+## Current Development State
+<!-- Updated 2026-04-27 -->
+
+**v1.0 — Phase 1 complete.** The pure computation kernel is implemented, 48/48 tests pass, and the code is on `claude/working`. See `CHANGELOG.md` for the full delivery record.
+
+**Next phase: Phase 2 — `loader/`** (spec: `docs/loader-design.md`). Before starting, write a new CLAUDE.md briefing scoped to Phase 2 and update this section.
+
+---
+
 ## Mission
 Implement the pure computation kernel exactly as specified in `docs/kernel-implementation-plan.md`. The kernel must:
 
@@ -54,16 +63,28 @@ Implement in this order. Each step should leave a runnable, importable state. Us
 ## Acceptance Criteria
 The phase is done when **all** of these are true. Verify each before declaring completion.
 
-- [ ] `pyproject.toml` exists; `pip install -e .` succeeds in a fresh venv.
-- [ ] `python -c "from gaming_research.kernel import evaluate_case, Options, Params"` succeeds.
-- [ ] `pytest` from the repo root reports all tests passing.
-- [ ] `grep -rE "print\(|^[^#]*input\(|open\([^)]*['\"]w" src/gaming_research/kernel/` returns no match.
-- [ ] No file under `src/gaming_research/kernel/` imports `gaming1030`, legacy `gt`, `main`, `ui`, or anything from outside `src/gaming_research/`.
-- [ ] Every result class is a `@dataclass(frozen=True)`.
-- [ ] `dataclasses.asdict(result)` round-trips cleanly for at least one GT case and one bluffing case in tests.
-- [ ] No files under `src/gaming_research/loader/`, `src/gaming_research/exhaustion/`, or `src/gaming_research/cli/`.
-- [ ] `Options` has exactly the fields, order, and defaults specified in the plan doc.
-- [ ] No new files in `docs/`. No edits to existing docs.
+- [x] `pyproject.toml` exists; `pip install -e .` succeeds in a fresh venv.
+- [x] `python -c "from gaming_research.kernel import evaluate_case, Options, Params"` succeeds.
+- [x] `pytest` from the repo root reports all tests passing.
+- [x] `grep -rE "print\(|^[^#]*input\(|open\([^)]*['\"]w" src/gaming_research/kernel/` returns no match.
+- [x] No file under `src/gaming_research/kernel/` imports `gaming1030`, legacy `gt`, `main`, `ui`, or anything from outside `src/gaming_research/`.
+- [x] Every result class is a `@dataclass(frozen=True)`.
+- [x] `dataclasses.asdict(result)` round-trips cleanly for at least one GT case and one bluffing case in tests.
+- [x] No files under `src/gaming_research/loader/`, `src/gaming_research/exhaustion/`, or `src/gaming_research/cli/`.
+- [x] `Options` has exactly the fields, order, and defaults specified in the plan doc.
+- [x] No new files in `docs/`. No edits to existing docs.
+
+## Post-Phase Documentation
+<!-- Added 2026-04-27 -->
+
+When all acceptance criteria for a phase are satisfied, do the following before declaring completion:
+
+1. **`CHANGELOG.md`** (repo root) — add a versioned entry: date, phase name, delivered modules table, test count, and the acceptance criteria checklist. Create the file if it does not yet exist.
+2. **`README.md`** — add or update the integration guide section for the newly completed modules. Mark each edit with an HTML comment: `<!-- Added YYYY-MM-DD: reason -->`. Keep the guide brief: install command, minimal call example, key result fields, serialization note.
+
+Commit both files together in a single `MMDD-vX.Y-docs` commit immediately after the implementation commit.
+
+---
 
 ## Anti-Features (Do Not Build)
 These look helpful but are explicitly off-limits this phase:
