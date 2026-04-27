@@ -249,4 +249,7 @@ For future implementation:
 - preserve multiple roots when found
 - let compatibility wrappers map the result to simpler statuses when needed
 
+## Implementation Plan
+The concrete first-phase implementation choices (package layout, frozen-dataclass schema, Decimal-at-boundary numeric policy, simultaneous `compat` / `research` bluffing modes, `brentq`-based research solver, pytest coverage) are recorded in `kernel-implementation-plan.md`. That document is the source of truth for *how* this contract will be realized; this document remains the source of truth for *what* the contract is.
+
 
