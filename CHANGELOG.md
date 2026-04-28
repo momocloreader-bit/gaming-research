@@ -1,5 +1,41 @@
 # Changelog
 
+## v1.1 — in progress (2026-04-28)
+
+### Phase 2: Loader (planning complete, implementation pending)
+
+Design reviewed and implementation plan signed off. Code not yet written.
+
+#### Planning deliverables
+
+| File | Description |
+|---|---|
+| `CLAUDE.md` | Rewritten as Phase 2 implementer briefing; 20 locked decisions, acceptance criteria, coding order |
+| `docs/loader-implementation-plan.md` | Concrete *how*: function signatures, column order, formatting rules, CLI flags, 4-row fixture parameter sets |
+
+#### Key decisions locked
+
+- Output: long format, LF, UTF-8, fixed column order (`case_id … p`), `is_selected` beside `root_index`
+- Failures: `LoaderError` values (3 `reason_code`s); per-row, never abort batch
+- Decimal text round-trips byte-for-byte through the 9 kernel-field columns
+- Computed floats: `{:.10g}`; bools: `true`/`false`; `None` → `""`
+- CLI: `--bluffing-mode`, `--enforce-war-payoff-s1/s2`; default `research`; exit 2 only on unreadable input
+- End-to-end fixture: 4 rows (GT-valid, bluffing-single-root, validation_failed, loader_rejected); multi-root expansion covered by writer unit test with hand-crafted `KernelResult`
+
+#### Acceptance criteria status
+
+- [x] `docs/loader-implementation-plan.md` exists and reviewed before any code
+- [ ] `pytest` passes (48 + new loader tests)
+- [ ] CLI end-to-end golden file matches byte-for-byte
+- [ ] No pandas/polars imports in `src/gaming_research/loader/`
+- [ ] No `print(`/`open(` in `schema.py`/`runner.py`
+- [ ] `git diff main -- src/gaming_research/kernel/` is empty
+- [ ] `pyproject.toml` deps still `["scipy"]`
+- [ ] `CaseRecord` and `LoaderError` are `@dataclass(frozen=True)`
+- [ ] No files under `exhaustion/` or `cli/`
+
+
+
 ## v1.0 — 2026-04-27
 
 ### Phase 1: Pure Computation Kernel
