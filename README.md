@@ -81,6 +81,33 @@ Options(
 
 See `CHANGELOG.md` for v1.0 delivery details and acceptance criteria.
 
+## 分支管理约定（人工备查，AI 不必遵守）
+<!-- 记录于 2026-04-28，供项目维护者参考 -->
+
+本项目的分支结构：
+
+| 分支 | 用途 |
+|---|---|
+| `main` | 稳定版本，每个 phase 验证完成后从 `claude/working` 合并进来 |
+| `claude/working` | 验证中间层；各 phase 的功能分支先合进这里，跑完验收后再合 `main` |
+| `claude/<task>-<slug>` | AI 执行具体任务时使用的临时分支，完成即可删除 |
+
+**合并节点**：一个 phase 的所有代码写完、`pytest` 全绿、CLI 端到端验证通过后，从 `claude/working` 向 `main` 开 PR。PR description 引用 `CHANGELOG.md` 里对应版本的验收清单，逐条确认。
+
+**临时分支清理**：功能/计划分支的提交 fast-forward 进 `claude/working` 之后即可删除，无需保留：
+
+```bash
+git branch -d claude/<task>-<slug>
+git push origin --delete claude/<task>-<slug>
+```
+
+如需保留某个实验性分支的历史起点但不想留分支，打轻量 tag 代替：
+
+```bash
+git tag archive/<task>-<slug>
+git branch -d claude/<task>-<slug>
+```
+
 ## Planned Direction
 1. Stabilize the pure computation core
 2. Build the exhaustion parser and enumerator around that core
