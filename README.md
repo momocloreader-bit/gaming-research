@@ -81,6 +81,49 @@ Options(
 
 See `CHANGELOG.md` for v1.0 delivery details and acceptance criteria.
 
+## Loader Integration Guide
+<!-- Added 2026-04-28: Phase 2 (v1.1) complete -->
+
+The loader reads a parameter CSV, runs each row through the kernel, and writes a long-format result CSV.
+
+Install (same package, no extra deps):
+
+```bash
+pip install -e .
+```
+
+Minimal invocation:
+
+```bash
+python -m gaming_research.loader INPUT.csv -o OUTPUT.csv
+```
+
+Optional flags:
+
+```bash
+python -m gaming_research.loader INPUT.csv -o OUTPUT.csv \
+    --bluffing-mode compat \
+    --enforce-war-payoff-s1 false \
+    --enforce-war-payoff-s2 false
+```
+
+Input CSV must have columns: `min1 max1 min2 max2 a1 a2 c1 c2 p`. A `case_id` column is optional (auto-generated as `row_00001`, ... if absent). All other columns are forwarded as passthrough metadata.
+
+Output column summary (long format — one row per `Solution`):
+
+| Column group | Columns |
+|---|---|
+| Identity | `case_id`, metadata columns (input order) |
+| Status | `status`, `status_detail`, `scenario`, `solver_mode` |
+| Solution | `root_index`, `is_selected`, `v1_hat`, `v2_hat`, `in_support`, `F1_v1_hat`, `F2_v2_hat`, `m_star` |
+| Derived | `v1_star`, `v2_star`, `F1_v1_star`, `F2_v2_star`, `GT_rhs`, `GT_condition` |
+| Loader error | `loader_error_code`, `loader_error_detail` |
+| Parameters | `min1 max1 min2 max2 a1 a2 c1 c2 p` (exact input strings) |
+
+`status` values: `solver_has_valid_solution`, `solver_no_valid_solution`, `validation_failed`, `loader_rejected`. All four appear as output rows; per-row failures never abort the batch. Exit code is `0` on normal completion, `2` on unreadable input/output or invalid CLI arguments.
+
+See `docs/loader-design.md` for full specification and `docs/loader-implementation-plan.md` for implementation details.
+
 ## 分支管理约定（人工备查，AI 不必遵守）
 <!-- 记录于 2026-04-28，供项目维护者参考 -->
 

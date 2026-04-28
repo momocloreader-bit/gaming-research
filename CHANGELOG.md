@@ -1,38 +1,42 @@
 # Changelog
 
-## v1.1 — in progress (2026-04-28)
+## v1.1 — 2026-04-28
 
-### Phase 2: Loader (planning complete, implementation pending)
+### Phase 2: Loader
 
-Design reviewed and implementation plan signed off. Code not yet written.
+Table-to-kernel input bridge: reads a CSV, feeds each row to `evaluate_case`, writes a long-format result CSV.
 
-#### Planning deliverables
+#### Delivered modules
 
 | File | Description |
 |---|---|
-| `CLAUDE.md` | Rewritten as Phase 2 implementer briefing; 20 locked decisions, acceptance criteria, coding order |
-| `docs/loader-implementation-plan.md` | Concrete *how*: function signatures, column order, formatting rules, CLI flags, 4-row fixture parameter sets |
+| `loader/schema.py` | `KERNEL_FIELDS`, `ID_COLUMN`, `AUTO_ID_FORMAT`; `CaseRecord` and `LoaderError` frozen dataclasses |
+| `loader/reader.py` | `read_cases(path)` — stdlib `csv.DictReader`; per-row `LoaderError` values; BOM-safe |
+| `loader/runner.py` | Pure `run(record, options)` — forwards errors, calls `evaluate_case` for valid records |
+| `loader/writer.py` | `OUTPUT_COLUMNS` tuple; `flatten()` row expansion; `write_rows()` with LF/UTF-8 |
+| `loader/cli.py` + `__main__.py` | `python -m gaming_research.loader INPUT.csv -o OUTPUT.csv`; 3 flags; stderr summary; exit codes |
 
-#### Key decisions locked
+#### Test coverage
 
-- Output: long format, LF, UTF-8, fixed column order (`case_id … p`), `is_selected` beside `root_index`
-- Failures: `LoaderError` values (3 `reason_code`s); per-row, never abort batch
-- Decimal text round-trips byte-for-byte through the 9 kernel-field columns
-- Computed floats: `{:.10g}`; bools: `true`/`false`; `None` → `""`
-- CLI: `--bluffing-mode`, `--enforce-war-payoff-s1/s2`; default `research`; exit 2 only on unreadable input
-- End-to-end fixture: 4 rows (GT-valid, bluffing-single-root, validation_failed, loader_rejected); multi-root expansion covered by writer unit test with hand-crafted `KernelResult`
+20 loader tests across 3 files (68 total: 48 Phase 1 + 20 loader).
 
-#### Acceptance criteria status
+| Test file | Coverage |
+|---|---|
+| `test_loader_reader.py` | Missing column, unparseable decimal, empty value, auto-id, case_id passthrough, empty case_id, metadata, duplicate ids, UTF-8 BOM, leading/trailing spaces |
+| `test_loader_writer.py` | All 4 result statuses, 2-solution expansion, `is_selected`, `m_star=None`, float format, LF endings, metadata column order |
+| `test_loader_end_to_end.py` | Byte-for-byte golden CSV comparison (4-row fixture) |
+
+#### Acceptance criteria (all satisfied)
 
 - [x] `docs/loader-implementation-plan.md` exists and reviewed before any code
-- [ ] `pytest` passes (48 + new loader tests)
-- [ ] CLI end-to-end golden file matches byte-for-byte
-- [ ] No pandas/polars imports in `src/gaming_research/loader/`
-- [ ] No `print(`/`open(` in `schema.py`/`runner.py`
-- [ ] `git diff main -- src/gaming_research/kernel/` is empty
-- [ ] `pyproject.toml` deps still `["scipy"]`
-- [ ] `CaseRecord` and `LoaderError` are `@dataclass(frozen=True)`
-- [ ] No files under `exhaustion/` or `cli/`
+- [x] `pytest` passes (48 + 20 loader tests = 68 total)
+- [x] CLI end-to-end golden file matches byte-for-byte
+- [x] No pandas/polars imports in `src/gaming_research/loader/`
+- [x] No `print(`/`open(` in `schema.py`/`runner.py`
+- [x] No kernel files modified in Phase 2
+- [x] `pyproject.toml` deps still `["scipy"]`
+- [x] `CaseRecord` and `LoaderError` are `@dataclass(frozen=True)`
+- [x] No files under `exhaustion/` or `cli/`
 
 
 

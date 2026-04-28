@@ -1,15 +1,15 @@
 # CLAUDE.md
 
-Briefing for the implementer of **Phase 2** of `gaming-research`.
+Briefing for the implementer of **Phase 3** of `gaming-research`.
 
 ## Current Development State
-<!-- Updated 2026-04-28 -->
+<!-- Updated 2026-04-28: Phase 2 (v1.1) complete -->
 
-**v1.0 — Phase 1 complete.** The pure computation kernel is implemented, 48/48 tests pass, and the code is on `claude/working`. See `CHANGELOG.md` for the full delivery record.
+**v1.0 — Phase 1 complete.** The pure computation kernel is implemented, 48/48 tests pass. See `CHANGELOG.md` for the full delivery record.
 
-**v1.1 — Phase 2 in progress.** The loader (`src/gaming_research/loader/`) is being built on `claude/plan-phase2-loader-WExtQ`. Source of truth: `docs/loader-design.md` (the *what*, locked) and `docs/loader-implementation-plan.md` (the *how*, written before any code in this phase).
+**v1.1 — Phase 2 complete.** The loader (`src/gaming_research/loader/`) is fully implemented: `schema.py`, `reader.py`, `runner.py`, `writer.py`, `cli.py`. All 68 tests pass (48 kernel + 20 loader). The CLI is runnable as `python -m gaming_research.loader INPUT.csv -o OUTPUT.csv`. See `CHANGELOG.md` v1.1 for the full delivery record and `docs/loader-design.md` / `docs/loader-implementation-plan.md` for the spec.
 
-Phase 3 (`exhaustion/`) remains untouched.
+**v1.2 — Phase 3 not yet started.** The exhaustion enumerator (`src/gaming_research/exhaustion/`) is next. Spec: `docs/exhaustion-design.md` and `docs/exhaustion.txt`. The kernel and loader are locked; do not modify them.
 
 ---
 
