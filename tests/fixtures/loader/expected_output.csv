@@ -1,0 +1,5 @@
+case_id,status,status_detail,scenario,solver_mode,root_index,is_selected,v1_hat,v2_hat,in_support,F1_v1_hat,F2_v2_hat,m_star,v1_star,v2_star,F1_v1_star,F2_v2_star,GT_rhs,GT_condition,loader_error_code,loader_error_detail,min1,max1,min2,max2,a1,a2,c1,c2,p
+gt_case,solver_has_valid_solution,gt_valid_solution,GT,closed_form,0,true,7.636363636,3,true,0.7373737374,0.2222222222,,6,3,0.5555555556,0.2222222222,10.5,true,,,1,10,1,10,3,4,6,5.5,0.5
+bluff_case,solver_has_valid_solution,bluffing_single_valid_root,bluffing,research,0,true,5.492750577,4.179182028,true,0.4991945085,0.3532424475,2,6,6,0.5555555556,0.5555555556,2.4,false,,,1,10,1,10,3,3,6,6,0.5
+vf_case,validation_failed,p_in_open_unit_interval,,,,,,,,,,,,,,,,,,,1,10,1,10,3,3,6,6,1
+lr_case,loader_rejected,unparseable_decimal,,,,,,,,,,,,,,,,,unparseable_decimal,p,1,10,1,10,3,3,6,6,
