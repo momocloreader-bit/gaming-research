@@ -1,0 +1,43 @@
+{
+  "allow_large_grid_used": false,
+  "elapsed_seconds": 0.0,
+  "estimated_case_count": 16,
+  "finished_at": "2026-04-30T19:18:48.624746+00:00",
+  "options": {
+    "bluffing_sample_count": 200,
+    "bluffing_solver_mode": "research",
+    "denom_eps": 1e-12,
+    "enforce_war_payoff_s1": true,
+    "enforce_war_payoff_s2": true
+  },
+  "output_row_count": 16,
+  "package_version": "0.1.0",
+  "ran_case_count": 16,
+  "reduction_path": "analytical_reduction",
+  "schema_version": 1,
+  "spec": {
+    "a1": "0.5",
+    "a2": "0.5",
+    "avg_diff_min": "1",
+    "c1_max": "24",
+    "c1_min": "0.1",
+    "c1_step": "0.1",
+    "c2_max": "24",
+    "c2_min": "0.1",
+    "c2_step": "0.1",
+    "min1_values": [
+      "2"
+    ],
+    "min2_values": [
+      "1"
+    ],
+    "p_values": [
+      "0.5"
+    ],
+    "span1": "15",
+    "span2": "15"
+  },
+  "started_at": "2026-04-30T19:18:48.624746+00:00",
+  "truncated": false,
+  "truncation_reason": null
+}
