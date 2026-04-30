@@ -8,6 +8,8 @@
 
 ## 快速开始
 
+环境要求：Python 3.11+，scipy >= 1.9。
+
 ```bash
 pip install -e .
 python -m gaming_research.exhaustion -o results.csv

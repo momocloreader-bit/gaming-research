@@ -2,6 +2,12 @@
 
 This repository is dedicated to the research-side core algorithm work that is being split out from the UI-oriented `gaming` repository.
 
+## Requirements
+
+- **Python 3.11+**
+- **scipy >= 1.9** (only runtime dependency; installed automatically via `pip install -e .`)
+- pytest >= 7 (dev only, for running the test suite)
+
 ## Scope
 - Batch exhaustion / enumeration of parameter combinations
 - Pure computation kernel shared by future batch tools
