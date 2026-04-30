@@ -124,6 +124,46 @@ Output column summary (long format — one row per `Solution`):
 
 See `docs/loader-design.md` for full specification and `docs/loader-implementation-plan.md` for implementation details.
 
+## Exhaustion Integration Guide
+<!-- Added 2026-04-30: Phase 3 (v1.2) complete -->
+
+The exhaustion package enumerates all valid parameter combinations from `docs/exhaustion.txt`, runs each through the kernel, and writes a long-format result CSV plus a metadata JSON.
+
+Install (same package, no extra deps):
+
+```bash
+pip install -e .
+```
+
+Minimal invocation:
+
+```bash
+python -m gaming_research.exhaustion -o cases.csv
+```
+
+Optional flags:
+
+```bash
+python -m gaming_research.exhaustion -o cases.csv \
+    --bluffing-mode compat \
+    --enforce-war-payoff-s1 false \
+    --enforce-war-payoff-s2 false \
+    --allow-large-grid
+```
+
+**Output files** (derived from `-o`):
+
+| File | Contents |
+|---|---|
+| `cases.csv` | Long-format results — same column set as the loader output; one row per `Solution` |
+| `cases.metadata.json` | Spec snapshot, options, case count, runtime, reduction path flag |
+
+**Safety gate**: by default the CLI refuses to run if the estimated case count exceeds 100,000. Pass `--allow-large-grid` to bypass. With default options (both war-payoff checks enforced, `a1=a2=0.5`) the analytical reduction path yields **3920 cases**; without it the full grid yields ~14M cases.
+
+**Reduction path**: when both `--enforce-war-payoff-s1` and `--enforce-war-payoff-s2` are `true` and `a1=a2=0.5`, the enumerator applies analytical domain reduction — `c1` and `c2` are narrowed to 4 candidates each per `(min1, min2, p)` triple. The `metadata.json` field `reduction_path` records which path was taken (`"analytical_reduction"` or `"full_grid"`).
+
+See `docs/exhaustion-design.md` for full specification and `docs/exhaustion-implementation-plan.md` for implementation details.
+
 ## 分支管理约定（人工备查，AI 不必遵守）
 <!-- 记录于 2026-04-28，供项目维护者参考 -->
 

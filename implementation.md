@@ -58,7 +58,7 @@ These look helpful but are explicitly off-limits this phase:
 
 **v1.1 — Phase 2 complete.** The loader (`src/gaming_research/loader/`) is fully implemented: `schema.py`, `reader.py`, `runner.py`, `writer.py`, `cli.py`. All 68 tests pass (48 kernel + 20 loader). The CLI is runnable as `python -m gaming_research.loader INPUT.csv -o OUTPUT.csv`. See `CHANGELOG.md` v1.1 for the full delivery record and `docs/loader-design.md` / `docs/loader-implementation-plan.md` for the spec.
 
-**v1.2 — Phase 3 in progress.** The exhaustion enumerator (`src/gaming_research/exhaustion/`) is being built on `claude/review-phase2-plan-phase3-CGyM6`. Source of truth: `docs/exhaustion-design.md` (the *what*, locked) and `docs/exhaustion-implementation-plan.md` (the *how*, written before any code in this phase). The kernel and loader are locked; do not modify them.
+**v1.2 — Phase 3 complete.** The exhaustion enumerator (`src/gaming_research/exhaustion/`) is fully implemented on `claude/implement-phase-3-PxYU8`. All 85 tests pass (48 kernel + 20 loader + 17 exhaustion). The CLI is runnable as `python -m gaming_research.exhaustion -o cases.csv`. See `CHANGELOG.md` v1.2 for the full delivery record. Phase 3 closes the Phase-1/2/3 trilogy; there is no Phase 4 brief.
 
 ---
 

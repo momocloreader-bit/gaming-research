@@ -1,5 +1,47 @@
 # Changelog
 
+## v1.2 — 2026-04-30
+
+### Phase 3: Exhaustion Enumerator
+
+Batch parameter-space enumerator: grids all valid `(min1, min2, p, c1, c2)` combinations, runs each through the kernel via the loader, and writes a long-format result CSV plus a metadata JSON.
+
+#### Delivered modules
+
+| File | Description |
+|---|---|
+| `exhaustion/spec.py` | `GridSpec` frozen dataclass; `CURRENT_SPEC` constant encoding `docs/exhaustion.txt`; `estimate_case_count`; `reduction_eligible` |
+| `exhaustion/enumerate.py` | `enumerate_cases(spec, options)` — two paths: analytical reduction (3920 cases) or full grid (~14M); Decimal arithmetic throughout; `case_id` formatter |
+| `exhaustion/runner.py` | Thin `run_all(spec, options)` — iterates `enumerate_cases`, delegates to `loader.runner.run` |
+| `exhaustion/writer.py` | `write_cases` (delegates to `loader.writer.flatten`/`write_rows`); `write_metadata` (sorted-key JSON, LF UTF-8) |
+| `exhaustion/cli.py` + `__main__.py` | `python -m gaming_research.exhaustion -o cases.csv [...]`; safety gate (100k threshold); stderr summary; exit codes |
+
+#### Test coverage
+
+17 new exhaustion tests across 4 files (85 total: 48 Phase 1 + 20 Phase 2 + 17 exhaustion).
+
+| Test file | Coverage |
+|---|---|
+| `test_exhaustion_spec.py` | Valid-pair count (35); estimate with reduction (3920) and full grid (14,112,000); `reduction_eligible` on/off |
+| `test_exhaustion_enumerate.py` | Case count; c1/c2 window values; `case_id` format; Decimal text; full-grid start; avg_diff_min filter |
+| `test_exhaustion_writer.py` | `write_cases` row count; `write_metadata` JSON keys; metadata path derivation |
+| `test_exhaustion_end_to_end.py` | Byte-for-byte golden `cases.csv`; key-by-key golden `metadata.json` (TINY_SPEC, 16 cases) |
+
+#### Acceptance criteria (all satisfied)
+
+- [x] `docs/exhaustion-implementation-plan.md` exists and reviewed before any code
+- [x] `pytest` passes (48 + 20 + 17 = 85 total)
+- [x] CLI end-to-end golden `cases.csv` matches byte-for-byte (TINY_SPEC)
+- [x] Safety gate fires (exit 2) without `--allow-large-grid` on full-grid path; passes on reduction path
+- [x] No pandas/polars/yaml imports in `src/gaming_research/exhaustion/`
+- [x] No `print(`/`open(`/`sys.stdout`/`sys.stderr` in `spec.py`, `enumerate.py`, `runner.py`
+- [x] No kernel or loader files modified in Phase 3
+- [x] `pyproject.toml` deps still `["scipy"]`
+- [x] `GridSpec` is `@dataclass(frozen=True)`
+- [x] No files under `src/gaming_research/cli/`
+- [x] Reduction path yields exactly 3920 cases for `CURRENT_SPEC` with default options
+- [x] Decimal text canonical: `min1 → "2"`, `p → "0.3"`, `a1 → "0.5"`, `c1 → "5.2"`, etc.
+
 ## v1.1 — 2026-04-28
 
 ### Phase 2: Loader
