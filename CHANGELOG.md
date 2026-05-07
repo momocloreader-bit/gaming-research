@@ -1,5 +1,24 @@
 # Changelog
 
+## v1.3 — 2026-05-07
+
+### Customizable `GridSpec` via `--spec-file`
+
+The exhaustion CLI now accepts `--spec-file PATH`, loading a full `GridSpec` from JSON at runtime. When the flag is omitted the built-in `CURRENT_SPEC` is used (no behavior change for existing invocations). All 14 `GridSpec` fields are configurable; values must be JSON strings to preserve `Decimal` precision. The schema is validated up-front (non-empty value lists; `span > 0`; `step > 0`; `c?_min <= c?_max`; `a1`/`a2`/`avg_diff_min >= 0`); failure exits 2 with a stderr message naming the offending field.
+
+`metadata.json` gains a `spec_source` field — the `--spec-file` path string when supplied, `"CURRENT_SPEC"` otherwise. The `spec` block format is unchanged, so a previous run's `metadata.json` `spec` block (plus `"schema_version": 1`) round-trips back through `--spec-file`.
+
+`a1`/`a2` ≠ `0.5` falls through to the existing full-grid path (`reduction_path: "full_grid"`); the 100,000-case safety gate continues to apply.
+
+| File | Change |
+|---|---|
+| `exhaustion/spec.py` | + `GridSpec.from_dict`, `_validate_spec` (pure, no I/O) |
+| `exhaustion/cli.py` | + `--spec-file` flag, `spec_source` metadata field |
+| `samples/exhaustion_spec.example.json` | New copy-paste template |
+| `tests/test_exhaustion_spec_loader.py` | New — parser + validator unit tests |
+| `tests/test_exhaustion_cli_spec_file.py` | New — CLI integration tests |
+| `docs/exhaustion-usage.md` | + "自定义参数空间" section |
+
 ## v1.2 — 2026-04-30
 
 ### Phase 3: Exhaustion Enumerator

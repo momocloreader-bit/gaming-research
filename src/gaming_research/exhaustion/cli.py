@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.metadata
+import json
 import sys
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -62,6 +63,7 @@ def main() -> None:
         "--enforce-war-payoff-s2", type=_bool_arg, default=True, metavar="{true,false}",
     )
     parser.add_argument("--allow-large-grid", action="store_true", default=False)
+    parser.add_argument("--spec-file", default=None, metavar="PATH")
     args = parser.parse_args()
 
     output_path: str = args.output
@@ -70,13 +72,25 @@ def main() -> None:
         sys.exit(2)
     metadata_path = output_path[:-4] + ".metadata.json"
 
+    if args.spec_file:
+        try:
+            with open(args.spec_file, encoding="utf-8") as fh:
+                spec = GridSpec.from_dict(json.load(fh))
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            print(f"exhaustion: cannot load --spec-file: {exc}", file=sys.stderr)
+            sys.exit(2)
+        spec_source: str = args.spec_file
+    else:
+        spec = CURRENT_SPEC
+        spec_source = "CURRENT_SPEC"
+
     options = Options(
         bluffing_solver_mode=args.bluffing_mode,
         enforce_war_payoff_s1=args.enforce_war_payoff_s1,
         enforce_war_payoff_s2=args.enforce_war_payoff_s2,
     )
 
-    estimated = estimate_case_count(CURRENT_SPEC, options)
+    estimated = estimate_case_count(spec, options)
     if estimated > 100_000 and not args.allow_large_grid:
         print(
             f"exhaustion: estimated {estimated:,} cases exceeds the 100,000 "
@@ -86,7 +100,7 @@ def main() -> None:
         sys.exit(2)
 
     started_at = datetime.now(timezone.utc)
-    pairs = list(run_all(CURRENT_SPEC, options))
+    pairs = list(run_all(spec, options))
     finished_at = datetime.now(timezone.utc)
 
     try:
@@ -96,7 +110,7 @@ def main() -> None:
         sys.exit(2)
 
     reduction_path = (
-        "analytical_reduction" if reduction_eligible(CURRENT_SPEC, options) else "full_grid"
+        "analytical_reduction" if reduction_eligible(spec, options) else "full_grid"
     )
     meta = {
         "schema_version": 1,
@@ -104,7 +118,8 @@ def main() -> None:
         "started_at": started_at.isoformat(),
         "finished_at": finished_at.isoformat(),
         "elapsed_seconds": (finished_at - started_at).total_seconds(),
-        "spec": _spec_to_dict(CURRENT_SPEC),
+        "spec": _spec_to_dict(spec),
+        "spec_source": spec_source,
         "options": _options_to_dict(options),
         "estimated_case_count": estimated,
         "ran_case_count": len(pairs),

@@ -32,6 +32,7 @@ def _build_meta(spec, options, pairs, output_row_count):
         "finished_at": now.isoformat(),
         "elapsed_seconds": 0.0,
         "spec": _spec_to_dict(spec),
+        "spec_source": "CURRENT_SPEC",
         "options": _options_to_dict(options),
         "estimated_case_count": estimate_case_count(spec, options),
         "ran_case_count": len(pairs),

@@ -31,7 +31,8 @@ python -m gaming_research.exhaustion -o <path>.csv \
     [--bluffing-mode {compat,research}] \
     [--enforce-war-payoff-s1 {true,false}] \
     [--enforce-war-payoff-s2 {true,false}] \
-    [--allow-large-grid]
+    [--allow-large-grid] \
+    [--spec-file PATH]
 ```
 
 ### 参数说明
@@ -43,6 +44,7 @@ python -m gaming_research.exhaustion -o <path>.csv \
 | `--enforce-war-payoff-s1` | `true` | 是否要求 `p * max1 - c1 < 0`（战争收益约束） |
 | `--enforce-war-payoff-s2` | `true` | 是否要求 `(1-p) * max2 - c2 < 0` |
 | `--allow-large-grid` | 否 | 绕过 10 万 case 安全门，允许全网格扫描 |
+| `--spec-file` | 无 | 从 JSON 文件加载自定义 `GridSpec`；不传则使用内置 `CURRENT_SPEC` |
 
 ---
 
@@ -81,6 +83,39 @@ p * max1 < c1 < p * max1 + 0.5
 ```
 
 `metadata.json` 的 `reduction_path` 字段会记录本次走的是哪条路径：`"analytical_reduction"` 或 `"full_grid"`。
+
+---
+
+## 自定义参数空间（`--spec-file`）
+
+需要扫不同的网格时，无需改源码。把一份 JSON 传给 `--spec-file`，CLI 会用它替换 `CURRENT_SPEC` 跑一遍：
+
+```bash
+cp samples/exhaustion_spec.example.json my_spec.json
+# 编辑 my_spec.json 里的字段
+python -m gaming_research.exhaustion -o results.csv --spec-file my_spec.json
+```
+
+JSON 顶层包含 `schema_version: 1`（强制为 1）和 14 个 `GridSpec` 字段，与 `metadata.json` 的 `spec` 块一致，可以把上一次跑的 `metadata.json` 抽出来直接复用。
+
+**所有数值字段必须是字符串**（保留 `Decimal` 精度，避免 IEEE-754 转换误差）：
+
+```json
+{
+  "schema_version": 1,
+  "min1_values": ["2", "3", "4"],
+  "p_values":    ["0.3", "0.5", "0.7"],
+  "c1_step":     "0.1",
+  "a1":          "0.5",
+  ...
+}
+```
+
+完整字段清单参见 `samples/exhaustion_spec.example.json`。基本校验：列表非空，`span > 0`，`step > 0`，`c?_min <= c?_max`，`a1/a2/avg_diff_min >= 0`；任何字段不合法，CLI 退出码 2 并把字段名打到 stderr。
+
+`metadata.json` 新增 `"spec_source"` 字段：传 `--spec-file` 时记录该路径字符串，否则为 `"CURRENT_SPEC"`。
+
+> ⚠️ 当 `a1` 或 `a2` ≠ `0.5` 时，自动 fallback 到全网格路径（`reduction_path: "full_grid"`），case 数可能从 ~3920 飙到千万级，会触发 10 万 case 安全门。确实要跑加 `--allow-large-grid`。
 
 ---
 
@@ -135,6 +170,7 @@ Pass --allow-large-grid to proceed.
   "finished_at": "2026-04-30T10:00:01.000000+00:00",
   "elapsed_seconds": 1.0,
   "spec": { ... },
+  "spec_source": "CURRENT_SPEC",
   "options": {
     "bluffing_solver_mode": "research",
     "enforce_war_payoff_s1": true,

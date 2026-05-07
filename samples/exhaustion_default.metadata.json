@@ -56,6 +56,7 @@
     "span1": "15",
     "span2": "15"
   },
+  "spec_source": "CURRENT_SPEC",
   "started_at": "2026-05-04T21:54:27.673522+00:00",
   "truncated": false,
   "truncation_reason": null
