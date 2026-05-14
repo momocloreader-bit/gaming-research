@@ -5,10 +5,16 @@ from decimal import Decimal
 
 from gaming_research.kernel.types import Options, Params
 from gaming_research.loader.schema import CaseRecord
-from gaming_research.exhaustion.spec import GridSpec, reduction_eligible
+from gaming_research.exhaustion.spec import (
+    GridSpec, materialize_axis, reduction_eligible,
+)
 
 
 def enumerate_cases(spec: GridSpec, options: Options) -> Iterator[CaseRecord]:
+    c1_axis = materialize_axis(spec.c1)
+    c2_axis = materialize_axis(spec.c2)
+    use_reduction = reduction_eligible(spec, options)
+
     for min1 in spec.min1_values:
         max1 = min1 + spec.span1
         for min2 in spec.min2_values:
@@ -18,10 +24,14 @@ def enumerate_cases(spec: GridSpec, options: Options) -> Iterator[CaseRecord]:
             if avg1 - avg2 < spec.avg_diff_min:
                 continue
             for p in spec.p_values:
-                if reduction_eligible(spec, options):
-                    yield from _reduction_cases(spec, min1, max1, min2, max2, p)
+                if use_reduction:
+                    yield from _reduction_cases(
+                        spec, min1, max1, min2, max2, p, c1_axis, c2_axis,
+                    )
                 else:
-                    yield from _full_grid_cases(spec, min1, max1, min2, max2, p)
+                    yield from _full_grid_cases(
+                        spec, min1, max1, min2, max2, p, c1_axis, c2_axis,
+                    )
 
 
 def _reduction_cases(
@@ -29,20 +39,20 @@ def _reduction_cases(
     min1: Decimal, max1: Decimal,
     min2: Decimal, max2: Decimal,
     p: Decimal,
+    c1_axis: tuple[Decimal, ...],
+    c2_axis: tuple[Decimal, ...],
 ) -> Iterator[CaseRecord]:
     c1_lo = p * max1
     c1_hi = c1_lo + spec.a1
-    c1 = c1_lo + spec.c1_step
-    while c1 < c1_hi:
-        if spec.c1_min <= c1 <= spec.c1_max:
-            c2_lo = (1 - p) * max2
-            c2_hi = c2_lo + spec.a2
-            c2 = c2_lo + spec.c2_step
-            while c2 < c2_hi:
-                if spec.c2_min <= c2 <= spec.c2_max:
-                    yield _make_record(min1, max1, min2, max2, p, c1, c2, spec)
-                c2 += spec.c2_step
-        c1 += spec.c1_step
+    c2_lo = (1 - p) * max2
+    c2_hi = c2_lo + spec.a2
+    for c1 in c1_axis:
+        if not (c1_lo < c1 < c1_hi):
+            continue
+        for c2 in c2_axis:
+            if not (c2_lo < c2 < c2_hi):
+                continue
+            yield _make_record(min1, max1, min2, max2, p, c1, c2, spec)
 
 
 def _full_grid_cases(
@@ -50,14 +60,12 @@ def _full_grid_cases(
     min1: Decimal, max1: Decimal,
     min2: Decimal, max2: Decimal,
     p: Decimal,
+    c1_axis: tuple[Decimal, ...],
+    c2_axis: tuple[Decimal, ...],
 ) -> Iterator[CaseRecord]:
-    c1 = spec.c1_min
-    while c1 <= spec.c1_max:
-        c2 = spec.c2_min
-        while c2 <= spec.c2_max:
+    for c1 in c1_axis:
+        for c2 in c2_axis:
             yield _make_record(min1, max1, min2, max2, p, c1, c2, spec)
-            c2 += spec.c2_step
-        c1 += spec.c1_step
 
 
 def _make_record(

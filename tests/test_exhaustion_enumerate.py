@@ -5,7 +5,9 @@ from decimal import Decimal
 import pytest
 
 from gaming_research.kernel.types import Options
-from gaming_research.exhaustion.spec import CURRENT_SPEC, GridSpec
+from gaming_research.exhaustion.spec import (
+    CURRENT_SPEC, GridSpec, PointsSegment, RangeSegment, materialize_axis,
+)
 from gaming_research.exhaustion.enumerate import enumerate_cases
 
 _default_options = Options()
@@ -66,15 +68,80 @@ def test_avg_diff_min_filter():
         a1=Decimal("0.5"),
         a2=Decimal("0.5"),
         p_values=(Decimal("0.5"),),
-        c1_min=Decimal("0.1"),
-        c1_max=Decimal("24"),
-        c1_step=Decimal("0.1"),
-        c2_min=Decimal("0.1"),
-        c2_max=Decimal("24"),
-        c2_step=Decimal("0.1"),
+        c1=(RangeSegment(min=Decimal("0.1"), max=Decimal("24"), step=Decimal("0.1")),),
+        c2=(RangeSegment(min=Decimal("0.1"), max=Decimal("24"), step=Decimal("0.1")),),
         avg_diff_min=Decimal("1"),
     )
     records = list(enumerate_cases(spec, _default_options))
-    # min1=1,min2=1 → avg diff 0 < 1 → skipped; min1=2,min2=1 → avg diff 1 ≥ 1 → included
     assert all(r.raw_fields["min1"] != "1" for r in records)
     assert any(r.raw_fields["min1"] == "2" for r in records)
+
+
+def _single_pair_spec(c1_segs, c2_segs, p="0.3") -> GridSpec:
+    return GridSpec(
+        min1_values=(Decimal("2"),),
+        min2_values=(Decimal("1"),),
+        span1=Decimal("15"),
+        span2=Decimal("15"),
+        a1=Decimal("0.5"),
+        a2=Decimal("0.5"),
+        p_values=(Decimal(p),),
+        c1=c1_segs,
+        c2=c2_segs,
+        avg_diff_min=Decimal("1"),
+    )
+
+
+def test_points_segment_enumerates_specified_values():
+    # Full-grid mode (war payoff off) so all points enumerate without window filter.
+    opts = Options(enforce_war_payoff_s1=False, enforce_war_payoff_s2=False)
+    spec = _single_pair_spec(
+        (PointsSegment(values=(Decimal("0.3"), Decimal("0.7"), Decimal("1.1"))),),
+        (PointsSegment(values=(Decimal("0.4"), Decimal("0.9"))),),
+    )
+    records = list(enumerate_cases(spec, opts))
+    pairs = {(r.raw_fields["c1"], r.raw_fields["c2"]) for r in records}
+    assert pairs == {
+        ("0.3", "0.4"), ("0.3", "0.9"),
+        ("0.7", "0.4"), ("0.7", "0.9"),
+        ("1.1", "0.4"), ("1.1", "0.9"),
+    }
+
+
+def test_multi_segment_axis_dedupes_and_sorts():
+    # c1 has overlapping range + points; materialized axis must be deduped + sorted.
+    segs = (
+        RangeSegment(min=Decimal("0.30"), max=Decimal("0.32"), step=Decimal("0.01")),
+        PointsSegment(values=(Decimal("0.31"), Decimal("0.50"), Decimal("0.10"))),
+    )
+    axis = materialize_axis(segs)
+    assert axis == (
+        Decimal("0.10"), Decimal("0.30"), Decimal("0.31"),
+        Decimal("0.32"), Decimal("0.50"),
+    )
+
+
+def test_reduction_window_strictly_open_at_lo():
+    # For p=0.3, max1=17: c1_lo = 5.1 exactly. Spec has c1 point 5.1 — must be excluded.
+    spec = _single_pair_spec(
+        (PointsSegment(values=(Decimal("5.1"), Decimal("5.2"))),),
+        (PointsSegment(values=(Decimal("11.3"),)),),
+    )
+    records = list(enumerate_cases(spec, _default_options))
+    c1_values = {r.raw_fields["c1"] for r in records}
+    assert "5.1" not in c1_values
+    assert "5.2" in c1_values
+
+
+def test_reduction_window_filters_out_of_range_points():
+    # For p=0.3, c1 window is (5.1, 5.6). c1 segment mixes inside and outside points.
+    spec = _single_pair_spec(
+        (PointsSegment(values=(
+            Decimal("4.9"), Decimal("5.0"), Decimal("5.2"),
+            Decimal("5.5"), Decimal("5.6"), Decimal("6.0"),
+        )),),
+        (PointsSegment(values=(Decimal("11.3"),)),),
+    )
+    records = list(enumerate_cases(spec, _default_options))
+    c1_values = {r.raw_fields["c1"] for r in records}
+    assert c1_values == {"5.2", "5.5"}

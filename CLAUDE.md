@@ -2,8 +2,8 @@
 
 **Project:** `gaming-research` — batch parameter-space enumerator for a game-theory kernel (Python 3, stdlib + scipy).
 
-**MODE: COMPLETE**
-**PHASE: 3 — DONE**
+**MODE: IMPLEMENTATION**
+**PHASE: 4 — DONE**
 
 ## Stream Timeout Prevention
 
@@ -30,5 +30,5 @@
 
 ## Layer files
 
-- `implementation.md` — critical rules (stable), anti-features, when-in-doubt guidance, and all Phase 3 state (mission, architecture, coding order, acceptance criteria, post-phase docs). **Active now.**
+- `implementation.md` — critical rules (stable), anti-features, when-in-doubt guidance, and the current phase's state (mission, scope, coding order, acceptance criteria, post-phase docs). Rewritten at each phase boundary. **Active now.**
 - `planning.md` — goals, constraints, open questions, and design decisions for the *next* phase. **Inactive during implementation.**

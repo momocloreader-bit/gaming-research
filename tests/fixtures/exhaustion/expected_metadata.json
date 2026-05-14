@@ -19,12 +19,22 @@
     "a1": "0.5",
     "a2": "0.5",
     "avg_diff_min": "1",
-    "c1_max": "24",
-    "c1_min": "0.1",
-    "c1_step": "0.1",
-    "c2_max": "24",
-    "c2_min": "0.1",
-    "c2_step": "0.1",
+    "c1": [
+      {
+        "max": "24",
+        "min": "0.1",
+        "step": "0.1",
+        "type": "range"
+      }
+    ],
+    "c2": [
+      {
+        "max": "24",
+        "min": "0.1",
+        "step": "0.1",
+        "type": "range"
+      }
+    ],
     "min1_values": [
       "2"
     ],
@@ -34,9 +44,11 @@
     "p_values": [
       "0.5"
     ],
+    "schema_version": 2,
     "span1": "15",
     "span2": "15"
   },
+  "spec_source": "CURRENT_SPEC",
   "started_at": "2026-04-30T19:18:48.624746+00:00",
   "truncated": false,
   "truncation_reason": null

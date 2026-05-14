@@ -2,6 +2,37 @@
 
 This repository is dedicated to the research-side core algorithm work that is being split out from the UI-oriented `gaming` repository.
 
+## Requirements
+
+- **Python 3.11+**
+- **scipy >= 1.9** (only runtime dependency; installed automatically via `pip install -e .`)
+- pytest >= 7 (dev only, for running the test suite)
+
+## Installation
+
+Recommended: install into a project-local virtual environment so the package and its `scipy` dependency don't pollute the system Python.
+
+```bash
+# from the repo root
+python3 -m venv .venv
+source .venv/bin/activate         # Windows: .venv\Scripts\activate
+pip install -e .                  # add ".[dev]" if you also want pytest
+```
+
+Verify:
+
+```bash
+python -m gaming_research.exhaustion --help
+```
+
+Running without activating: once `.venv` exists you can invoke the interpreter by path and skip `source`:
+
+```bash
+.venv/bin/python -m gaming_research.exhaustion -o cases.csv
+```
+
+All `python -m gaming_research.…` commands below assume the venv is active (or replaced with `.venv/bin/python`).
+
 ## Scope
 - Batch exhaustion / enumeration of parameter combinations
 - Pure computation kernel shared by future batch tools
@@ -162,7 +193,9 @@ python -m gaming_research.exhaustion -o cases.csv \
 
 **Reduction path**: when both `--enforce-war-payoff-s1` and `--enforce-war-payoff-s2` are `true` and `a1=a2=0.5`, the enumerator applies analytical domain reduction — `c1` and `c2` are narrowed to 4 candidates each per `(min1, min2, p)` triple. The `metadata.json` field `reduction_path` records which path was taken (`"analytical_reduction"` or `"full_grid"`).
 
-See `docs/exhaustion-design.md` for full specification and `docs/exhaustion-implementation-plan.md` for implementation details.
+**Spec schema v2** (Phase 4, 2026-05-14): `c1` and `c2` accept arbitrary segment-union axes — any number of `RangeSegment` and `PointsSegment` entries in any order. See `docs/exhaustion-usage.md` § "Segment 语法" for the syntax. v1 spec files (with `c1_min`/`c1_max`/`c1_step` etc.) are auto-migrated in-memory at load time; a one-line `stderr` notice fires.
+
+See `docs/exhaustion-design.md` for full specification, `docs/exhaustion-implementation-plan.md` for Phase 3 implementation details, and `docs/exhaustion-points-plan.md` for the Phase 4 segment-union upgrade.
 
 ## 分支管理约定（人工备查，AI 不必遵守）
 <!-- 记录于 2026-04-28，供项目维护者参考 -->
