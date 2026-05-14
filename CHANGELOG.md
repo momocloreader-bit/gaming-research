@@ -1,5 +1,55 @@
 # Changelog
 
+## v1.4 — 2026-05-14
+
+### Phase 4: `c1` / `c2` Segment-Union Axes (schema v2)
+
+`c1` and `c2` now accept arbitrary axes built from any number of `RangeSegment` and `PointsSegment` entries. The schema bumps from v1 to v2; v1 spec files are auto-migrated in-memory at load time and a one-line `stderr` notice fires. `min1_values`, `min2_values`, `p_values` are unchanged (they were already point lists).
+
+The reduction window keeps its v1 semantic: `p*max1 < c1 < p*max1 + a1` and `(1-p)*max2 < c2 < (1-p)*max2 + a2` — strictly open on both ends. Point lists are filtered against this window after materialization.
+
+**v1 → v2 migration**: `c1_min` / `c1_max` / `c1_step` (and c2 equivalents) are removed as `GridSpec` fields; they survive only as keys recognized by an in-memory `_migrate_v1_to_v2` step. The dumped `metadata.json` spec block is now v2-shaped (self-describing `"schema_version": 2`, `c1` / `c2` as segment lists).
+
+| File | Change |
+|---|---|
+| `exhaustion/spec.py` | + `RangeSegment`, `PointsSegment`, `AxisSegment`; `GridSpec.c1` / `c2` are segment tuples; + `from_dict_with_meta`, `_migrate_v1_to_v2`, `materialize_axis`; reduction window filter rewritten to materialized-point form |
+| `exhaustion/enumerate.py` | Both `_full_grid_cases` and `_reduction_cases` rewritten to iterate materialized axes; window semantic preserved |
+| `exhaustion/cli.py` | Uses `from_dict_with_meta`; emits the migration `stderr` notice when triggered; `_spec_to_dict` outputs v2 shape |
+| `samples/exhaustion_spec.example.json` | Upgraded to schema v2 (single range segment, semantically equivalent) |
+| `tests/fixtures/exhaustion/` | + `v1_spec.json`, `v2_spec.json`, `points_spec.json`; `tiny_spec.py` and `expected_metadata.json` upgraded to v2 shape |
+| `docs/exhaustion-points-plan.md` | New — plan doc for this phase |
+| `docs/exhaustion-usage.md` | + Segment Syntax section, v1 auto-migration note |
+
+#### Test coverage
+
+117 tests pass (10 new spec cases + 5 new enumerate cases + 1 new end-to-end case + adjustments to existing tests):
+
+| Test file | New / changed |
+|---|---|
+| `test_exhaustion_spec.py` | +10 cases (v2 parse, v1 migration flag, version mismatches, mixed-field rejection, segment validation) |
+| `test_exhaustion_spec_loader.py` | Rewritten to v2 dicts |
+| `test_exhaustion_enumerate.py` | +5 cases (points enumeration, multi-segment dedupe/sort, reduction-window two-end-open boundary, points filtering inside window) |
+| `test_exhaustion_end_to_end.py` | +1 case (`points_spec.json` end-to-end) |
+| `test_exhaustion_cli_spec_file.py` | v2 happy path + v1 migration-notice path |
+| `test_exhaustion_writer.py` | Fixture upgraded to v2 |
+
+#### Acceptance criteria (all satisfied)
+
+- [x] `pytest` passes (117 tests; 1 unrelated Phase-2 hardcoded-`python` failure is out of scope)
+- [x] Every test case listed in `docs/exhaustion-points-plan.md` §测试覆盖 implemented and passes
+- [x] CLI run against a v1 spec emits the migration notice on stderr exactly once
+- [x] CLI run against a v2 spec emits no migration notice
+- [x] `grep -rE "print\(|open\(|sys\.stdout|sys\.stderr" src/gaming_research/exhaustion/spec.py src/gaming_research/exhaustion/enumerate.py src/gaming_research/exhaustion/runner.py` returns no match
+- [x] No file under `src/gaming_research/kernel/` or `src/gaming_research/loader/` modified
+- [x] `pyproject.toml` runtime deps still `["scipy"]`
+- [x] `GridSpec`, `RangeSegment`, `PointsSegment` are all `@dataclass(frozen=True)`
+- [x] `c1_min`/`c1_max`/`c1_step` (and c2 equivalents) appear in `spec.py` only as keys for `_migrate_v1_to_v2`; not `GridSpec` fields
+- [x] On `CURRENT_SPEC` with default options, reduction path still yields **3920 cases** (Phase 3 regression)
+
+#### Field experiment
+
+The `samples/worksheet1.csv` study set was used to cross-validate the two ingestion paths end-to-end. Loader: 72 → 72 solved. Exhaustion with a segment-union spec covering worksheet1's `c1` / `c2` axis values: 400 cases (20 × 20 Cartesian). worksheet1's 72 `(c1, c2)` keys are a strict subset of exhaustion's 400; all 16 compared kernel-output fields match across the 72 shared cases.
+
 ## v1.3 — 2026-05-07
 
 ### Customizable `GridSpec` via `--spec-file`
