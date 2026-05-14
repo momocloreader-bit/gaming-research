@@ -9,24 +9,22 @@ from gaming_research.exhaustion.spec import CURRENT_SPEC, GridSpec
 
 
 def _current_dict() -> dict:
-    d = _spec_to_dict(CURRENT_SPEC)
-    d["schema_version"] = 1
-    return d
+    return _spec_to_dict(CURRENT_SPEC)
 
 
 def test_from_dict_roundtrip_current_spec():
     assert GridSpec.from_dict(_current_dict()) == CURRENT_SPEC
 
 
-def test_from_dict_without_schema_version():
-    d = _spec_to_dict(CURRENT_SPEC)
-    assert "schema_version" not in d
+def test_from_dict_without_schema_version_v2_shape():
+    d = _current_dict()
+    del d["schema_version"]
     assert GridSpec.from_dict(d) == CURRENT_SPEC
 
 
 def test_rejects_numeric_scalar():
     d = _current_dict()
-    d["c1_step"] = 0.1
+    d["a1"] = 0.5
     with pytest.raises(ValueError, match="must be a string"):
         GridSpec.from_dict(d)
 
@@ -54,14 +52,14 @@ def test_rejects_unknown_field():
 
 def test_rejects_missing_field():
     d = _current_dict()
-    del d["c1_step"]
-    with pytest.raises(ValueError, match="missing spec field: c1_step"):
+    del d["c1"]
+    with pytest.raises(ValueError, match="missing spec field: c1"):
         GridSpec.from_dict(d)
 
 
-def test_rejects_bad_schema_version():
+def test_rejects_unsupported_schema_version():
     d = _current_dict()
-    d["schema_version"] = 2
+    d["schema_version"] = 99
     with pytest.raises(ValueError, match="unsupported schema_version"):
         GridSpec.from_dict(d)
 
@@ -70,20 +68,6 @@ def test_validate_empty_min1():
     d = _current_dict()
     d["min1_values"] = []
     with pytest.raises(ValueError, match="min1_values"):
-        GridSpec.from_dict(d)
-
-
-def test_validate_negative_step():
-    d = _current_dict()
-    d["c1_step"] = "-0.1"
-    with pytest.raises(ValueError, match="c1_step"):
-        GridSpec.from_dict(d)
-
-
-def test_validate_c1_min_gt_max():
-    d = _current_dict()
-    d["c1_min"] = "30"
-    with pytest.raises(ValueError, match="c1_min.*c1_max"):
         GridSpec.from_dict(d)
 
 

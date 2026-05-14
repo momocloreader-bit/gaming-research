@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "min1_values": ["2"],
+  "min2_values": ["1"],
+  "span1": "15",
+  "span2": "15",
+  "a1": "0.5",
+  "a2": "0.5",
+  "p_values": ["0.3"],
+  "c1_min": "5.1",
+  "c1_max": "5.6",
+  "c1_step": "0.01",
+  "c2_min": "11.2",
+  "c2_max": "11.7",
+  "c2_step": "0.01",
+  "avg_diff_min": "1"
+}

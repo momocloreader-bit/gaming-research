@@ -10,7 +10,9 @@ import pytest
 from gaming_research.kernel.types import Options
 from gaming_research.exhaustion.runner import run_all
 from gaming_research.exhaustion.writer import write_cases, write_metadata
-from gaming_research.exhaustion.spec import estimate_case_count, reduction_eligible
+from gaming_research.exhaustion.spec import (
+    GridSpec, estimate_case_count, reduction_eligible,
+)
 
 FIXTURES = Path(__file__).parent / "fixtures" / "exhaustion"
 
@@ -92,3 +94,24 @@ def test_metadata_json_matches_golden():
     finally:
         os.unlink(cases_path)
         os.unlink(meta_path)
+
+
+def test_points_spec_end_to_end():
+    payload = json.loads((FIXTURES / "points_spec.json").read_text(encoding="utf-8"))
+    spec, migrated = GridSpec.from_dict_with_meta(payload)
+    assert migrated is False
+    options = Options()
+
+    expected_count = estimate_case_count(spec, options)
+    pairs = list(run_all(spec, options))
+    assert len(pairs) == expected_count
+
+    with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as f:
+        cases_path = f.name
+    try:
+        output_row_count = write_cases(pairs, cases_path)
+        assert output_row_count == expected_count
+        body = Path(cases_path).read_text(encoding="utf-8").splitlines()
+        assert len(body) == expected_count + 1  # header + rows
+    finally:
+        os.unlink(cases_path)

@@ -8,7 +8,7 @@ from decimal import Decimal
 import pytest
 
 from gaming_research.kernel.types import Options
-from gaming_research.exhaustion.spec import GridSpec
+from gaming_research.exhaustion.spec import GridSpec, RangeSegment
 from gaming_research.exhaustion.enumerate import enumerate_cases
 from gaming_research.exhaustion.runner import run_all
 from gaming_research.exhaustion.writer import write_cases, write_metadata
@@ -22,12 +22,8 @@ _MINI_SPEC = GridSpec(
     a1=Decimal("0.5"),
     a2=Decimal("0.5"),
     p_values=(Decimal("0.5"),),
-    c1_min=Decimal("0.1"),
-    c1_max=Decimal("24"),
-    c1_step=Decimal("0.1"),
-    c2_min=Decimal("0.1"),
-    c2_max=Decimal("24"),
-    c2_step=Decimal("0.1"),
+    c1=(RangeSegment(min=Decimal("0.1"), max=Decimal("24"), step=Decimal("0.1")),),
+    c2=(RangeSegment(min=Decimal("0.1"), max=Decimal("24"), step=Decimal("0.1")),),
     avg_diff_min=Decimal("1"),
 )
 
